@@ -2,6 +2,8 @@
 
 This is a GitHub App that reviews pull requests and submits reviews with AI.
 
+** Python parser code can be found in the src/context/language folder.
+
 ## Setup
 
 1. Download NGROK [here](https://download.ngrok.com/). This will be used to create a secure tunnel to your local server.
