@@ -21,11 +21,11 @@ const processNode = (
 };
 
 export class JavascriptParser implements AbstractParser {
-  findEnclosingContext(
+  async findEnclosingContext(
     file: string,
     lineStart: number,
     lineEnd: number
-  ): EnclosingContext {
+  ): Promise<EnclosingContext | null> {
     const ast = parser.parse(file, {
       sourceType: "module",
       plugins: ["jsx", "typescript"], // To allow JSX and TypeScript
@@ -52,12 +52,13 @@ export class JavascriptParser implements AbstractParser {
         ));
       },
     });
-    return {
-      enclosingContext: largestEnclosingContext,
-    } as EnclosingContext;
+
+    // Wrap the result in a Promise
+    return Promise.resolve({ enclosingContext: largestEnclosingContext });
   }
 
-  dryRun(file: string): { valid: boolean; error: string } {
+  // The dryRun method should be inside the class
+  async dryRun(file: string): Promise<{ valid: boolean; error: string }> {
     try {
       const ast = parser.parse(file, {
         sourceType: "module",
