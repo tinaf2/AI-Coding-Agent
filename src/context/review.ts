@@ -6,6 +6,7 @@ import {
 } from "../constants";
 import * as diff from "diff";
 import { JavascriptParser } from "./language/javascript-parser";
+import { PythonParser } from "./language/python-parser";
 import { Node } from "@babel/traverse";
 
 const expandHunk = (
@@ -205,7 +206,7 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
     });
   });
 
-  hunks.forEach((hunk, idx) => {
+  hunks.forEach(async (hunk, idx) => {
     try {
       const trimmedHunk = trimHunk(hunk);
       const insertions = hunk.lines.filter((line) =>
@@ -213,18 +214,33 @@ const diffContextPerHunk = (file: PRFile, parser: AbstractParser) => {
       ).length;
       const lineStart = trimmedHunk.newStart;
       const lineEnd = lineStart + insertions;
-      const largestEnclosingFunction = parser.findEnclosingContext(
+      const enclosingContextPromise = parser.findEnclosingContext(
         updatedFile,
         lineStart,
         lineEnd
-      ).enclosingContext;
+      );
+      const largestEnclosingFunction = (await enclosingContextPromise)
+        .enclosingContext;
 
       if (largestEnclosingFunction) {
-        const enclosingRangeKey = `${largestEnclosingFunction.loc.start.line} -> ${largestEnclosingFunction.loc.end.line}`;
+        const enclosingRangeKey =
+          "loc" in largestEnclosingFunction
+            ? `${largestEnclosingFunction.loc.start.line} -> ${largestEnclosingFunction.loc.end.line}`
+            : "startLine" in largestEnclosingFunction &&
+              "endLine" in largestEnclosingFunction
+            ? `${largestEnclosingFunction.startLine} -> ${largestEnclosingFunction.endLine}`
+            : "unknown range";
         let existingHunks = scopeRangeHunkMap.get(enclosingRangeKey) || [];
         existingHunks.push(hunk);
         scopeRangeHunkMap.set(enclosingRangeKey, existingHunks);
-        scopeRangeNodeMap.set(enclosingRangeKey, largestEnclosingFunction);
+        if ("type" in largestEnclosingFunction) {
+          scopeRangeNodeMap.set(
+            enclosingRangeKey,
+            largestEnclosingFunction as Node
+          );
+        } else {
+          throw "Enclosing function is not of type Node.";
+        }
       } else {
         throw "No enclosing function.";
       }
