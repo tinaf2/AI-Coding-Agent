@@ -1,6 +1,7 @@
 import { Node } from "@babel/traverse";
 import { JavascriptParser } from "./context/language/javascript-parser";
 import { ChatCompletionMessageParam } from "groq-sdk/resources/chat/completions";
+import { PythonParser } from "./context/language/python-parser";
 
 export interface PRFile {
   sha: string;
@@ -90,7 +91,10 @@ export const processGitFilepath = (filepath: string) => {
 };
 
 export interface EnclosingContext {
-  enclosingContext: Node | null;
+  enclosingContext:
+    | Node
+    | { name: string; startLine: number; endLine: number }
+    | null;
 }
 
 export interface AbstractParser {
@@ -98,8 +102,8 @@ export interface AbstractParser {
     file: string,
     lineStart: number,
     lineEnd: number
-  ): EnclosingContext;
-  dryRun(file: string): { valid: boolean; error: string };
+  ): Promise<EnclosingContext | null>;
+  dryRun(file: string): Promise<{ valid: boolean; error: string }>;
 }
 
 const EXTENSIONS_TO_PARSERS: Map<string, AbstractParser> = new Map([
@@ -107,6 +111,7 @@ const EXTENSIONS_TO_PARSERS: Map<string, AbstractParser> = new Map([
   ["tsx", new JavascriptParser()],
   ["js", new JavascriptParser()],
   ["jsx", new JavascriptParser()],
+  ["py", new PythonParser()],
 ]);
 
 export const getParserForExtension = (filename: string) => {
