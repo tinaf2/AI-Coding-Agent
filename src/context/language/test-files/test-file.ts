@@ -1,4 +1,4 @@
-import { PythonParser } from "./python-parser";
+import { PythonParser } from "../python-parser";
 
 const pythonParser = new PythonParser();
 
@@ -19,7 +19,7 @@ async function runTests() {
     4,
     5
   );
-  console.log("Valid Range Test:", validRangeResult); // Expected: { enclosingContext: { name: "greet", startLine: 1, endLine: 3 } }
+  console.log("Valid Range Test:", validRangeResult); // Expected: { enclosingContext: { name: "greet", startLine: 4, endLine: 5 } }
 
   // Test with an invalid line range (no function or class)
   const invalidRangeResult = await pythonParser.findEnclosingContext(
